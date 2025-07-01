@@ -9,7 +9,11 @@ export async function moveUploadedImages(files: Record<string, string>, employee
   const baseUploadDir = path.join(__dirname, '../../uploads');
 
   const employeeDir = path.join(baseUploadDir, employeeCode);
-  if (!fs.existsSync(employeeDir)) fs.mkdirSync(employeeDir, { recursive: true });
+  const cccdDir = path.join(employeeDir, 'CCCD');
+  const thumbDir = path.join(employeeDir, 'CCCD_Thumb');
+
+  fs.mkdirSync(cccdDir, { recursive: true });
+  fs.mkdirSync(thumbDir, { recursive: true });
 
   for (const key in files) {
     const tempPath = files[key];
@@ -17,20 +21,26 @@ export async function moveUploadedImages(files: Record<string, string>, employee
 
     const isBack = key === 'IDBackImage';
     const newFilename = `${isBack ? 'CCCD_MS' : 'CCCD_MT'}-${employeeCode}${ext}`;
-    const newPath = path.join(employeeDir, newFilename);
+    const newPath = path.join(cccdDir, newFilename);
 
     fs.renameSync(tempPath, newPath);
-    finalPaths[key] = `/uploads/${employeeCode}/CCCD/${newFilename}`;
 
+    finalPaths[key] = `/uploads/${employeeCode}/CCCD/${newFilename}`;
     if (key === 'IDFrontImage' || key === 'IDBackImage') {
-      const thumbPath = await createThumbnail(newPath);
+      const thumbFileName = `${isBack ? 'CCCD_MS' : 'CCCD_MT'}-${employeeCode}_thumb${ext}`;
+      const thumbFullPath = path.join(thumbDir, thumbFileName);
+
+      await createThumbnail(newPath, thumbFullPath);
+
       const thumbKey = `${key}Thumb`;
-      finalPaths[thumbKey] = `/uploads/${employeeCode}/CCCD_Thumb/${path.basename(thumbPath)}`;
+      finalPaths[thumbKey] = `/uploads/${employeeCode}/CCCD_Thumb/${thumbFileName}`;
     }
   }
 
+  console.log(finalPaths);
   return finalPaths;
 }
+
 
 export function cleanUpTempUploads(usedPaths: string[]) {
   fs.readdir(tempUploadDir, (err, files) => {
@@ -44,19 +54,12 @@ export function cleanUpTempUploads(usedPaths: string[]) {
   });
 }
 
-export async function createThumbnail(originalPath: string) {
-  const dir = path.dirname(originalPath);
-  const ext = path.extname(originalPath);
-  const baseName = path.basename(originalPath, ext);
-
-  const thumbName = `${baseName}_thumb${ext}`;
-  const thumbPath = path.join(dir, thumbName);
-
+export async function createThumbnail(originalPath: string, outputPath: string) {
   try {
     await sharp(originalPath)
       .resize(300, 300)
-      .toFile(thumbPath);
-    return thumbPath;
+      .toFile(outputPath);
+    return outputPath;
   } catch (error) {
     throw error;
   }
