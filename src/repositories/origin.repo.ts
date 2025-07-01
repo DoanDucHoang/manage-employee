@@ -96,3 +96,12 @@ export async function updateOrigin(id: number, origin: Partial<Origin>): Promise
         conn.release();
     }
 }
+
+export async function deleteOriginByID(id: number): Promise<Origin | null> {
+    const [rows] = await pool.query(`SELECT * FROM origins WHERE id = ?`, [id]);
+    const origin = (rows as Origin[])[0];
+    if (!origin) return null;
+
+    await pool.query(`DELETE FROM origins WHERE id = ?`, [id]);
+    return origin;
+}

@@ -61,15 +61,23 @@ export const originController = {
     },
 
     deleteOriginByID: async (_: IncomingMessage, res: ServerResponse, id: number) => {
-        // try {
-        //     const deleted = await repo.deleteUser(id);
-        //     if (!deleted) return sendJson(res, 404, { message: 'User not found' });
-        //     sendJson(res, 200, deleted);
-        // } catch (error) {
-        //     sendJson(res, 400, {
-        //         message: "Error delete user!",
-        //         error: (error as Error).message
-        //     })
-        // }
-    },
+        try {
+          const deleted = await repo.deleteOriginByID(id);
+      
+          if (!deleted) {
+            return sendJson(res, 404, { message: 'Origin not found' });
+          }
+      
+          return sendJson(res, 200, {
+            message: 'Xóa nguyên quán thành công!',
+            data: deleted
+          });
+        } catch (error) {
+          return sendJson(res, 400, {
+            message: 'Lỗi xóa nguyên quán!',
+            error: (error as Error).message
+          });
+        }
+      },
+      
 }
